@@ -1,0 +1,99 @@
+.container { max-width: 780px; }
+
+.back { display: inline-block; color: var(--muted); margin-bottom: 20px; font-size: 13px; }
+.back:hover { color: var(--text); text-decoration: none; }
+
+.title { font-size: 22px; font-weight: 700; line-height: 1.4; margin-bottom: 10px; }
+
+.meta { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+
+.section { margin-bottom: 28px; }
+.section h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
+.section p { color: var(--text); line-height: 1.7; }
+
+.contributions { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.contributions li { color: var(--text); line-height: 1.6; }
+
+
+.related { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+
+.relatedItem {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.relatedHeader { display: flex; align-items: flex-start; gap: 8px; }
+
+.relatedTitle { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+
+.inArchiveBadge {
+  background: rgba(76, 175, 130, 0.15);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.relMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.relLinks { display: flex; gap: 10px; }
+.relLinks a { color: var(--accent); font-size: 12px; }
+
+.relSnippet { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 4px; }
+
+.langToggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.langBtn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 4px 14px;
+  border-radius: 6px;
+}
+
+.langActive {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
+  padding: 4px 14px;
+  border-radius: 6px;
+}
+
+.sectionContent { white-space: pre-line; }
+
+.notesArea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: inherit;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.notesFooter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.savedMsg {
+  color: var(--green);
+  font-size: 13px;
+}
