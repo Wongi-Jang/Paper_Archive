@@ -95,7 +95,17 @@ export default function PaperDetailPage() {
         <textarea
           className={styles.notesArea}
           value={notes}
-          onChange={e => setNotes(e.target.value)}
+          onChange={e => {
+            setNotes(e.target.value)
+            e.target.style.height = 'auto'
+            e.target.style.height = e.target.scrollHeight + 'px'
+          }}
+          ref={el => {
+            if (el) {
+              el.style.height = 'auto'
+              el.style.height = el.scrollHeight + 'px'
+            }
+          }}
           placeholder="Write your thoughts, questions, or annotations here…"
           rows={6}
         />
