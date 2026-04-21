@@ -45,14 +45,15 @@ def _detect_source(raw: str) -> tuple[str, str]:
     """Returns ('arxiv', clean_id) or ('web', url)."""
     raw = raw.strip()
 
-    # alphaXiv → treat as arXiv
-    for prefix in ('https://alphaxiv.org/abs/', 'http://alphaxiv.org/abs/', 'alphaxiv.org/abs/'):
-        if raw.startswith(prefix):
-            arxiv_id = raw[len(prefix):]
-            return 'arxiv', arxiv_id
+    # alphaXiv → extract arXiv ID (handles www. and pdf variants)
+    if 'alphaxiv.org' in raw:
+        match = re.search(r'(\d{4}\.\d{4,5})', raw)
+        if match:
+            return 'arxiv', match.group(1)
 
     # Standard arXiv URL
-    for prefix in ('https://arxiv.org/abs/', 'http://arxiv.org/abs/', 'arxiv.org/abs/'):
+    for prefix in ('https://arxiv.org/abs/', 'http://arxiv.org/abs/', 'arxiv.org/abs/',
+                   'https://arxiv.org/pdf/', 'http://arxiv.org/pdf/'):
         if raw.startswith(prefix):
             return 'arxiv', raw[len(prefix):]
 

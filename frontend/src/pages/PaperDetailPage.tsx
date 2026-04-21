@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import ReactMarkdown from 'react-markdown'
 import { papersApi, PaperAnalysis, RelatedPaper } from '../api'
 import styles from './PaperDetailPage.module.css'
 
@@ -21,6 +22,7 @@ export default function PaperDetailPage() {
   const qc = useQueryClient()
   const [lang, setLang] = useState<Lang>('en')
   const [notes, setNotes] = useState('')
+  const [editingNotes, setEditingNotes] = useState(false)
   const [saved, setSaved] = useState(false)
 
   const { data: paper, isLoading } = useQuery({
@@ -44,6 +46,7 @@ export default function PaperDetailPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['paper', id] })
       setSaved(true)
+      setEditingNotes(false)
       setTimeout(() => setSaved(false), 2000)
     },
   })
@@ -91,34 +94,74 @@ export default function PaperDetailPage() {
       )}
 
       <section className={styles.section}>
-        <h2>My Notes</h2>
-        <textarea
-          className={styles.notesArea}
-          value={notes}
-          onChange={e => {
-            setNotes(e.target.value)
-            e.target.style.height = 'auto'
-            e.target.style.height = e.target.scrollHeight + 'px'
-          }}
-          ref={el => {
-            if (el) {
-              el.style.height = 'auto'
-              el.style.height = el.scrollHeight + 'px'
-            }
-          }}
-          placeholder="Write your thoughts, questions, or annotations here…"
-          rows={6}
-        />
-        <div className={styles.notesFooter}>
+        <div className={styles.notesHeader}>
+          <h2>My Notes</h2>
           <button
-            onClick={() => saveNotes.mutate()}
-            disabled={saveNotes.isPending}
-            style={{ background: 'var(--accent)', color: '#fff' }}
+            className={styles.editToggle}
+            onClick={() => setEditingNotes(e => !e)}
           >
-            {saveNotes.isPending ? 'Saving…' : 'Save Notes'}
+            {editingNotes ? 'Preview' : 'Edit'}
           </button>
-          {saved && <span className={styles.savedMsg}>Saved</span>}
         </div>
+
+        {editingNotes ? (
+          <>
+            <textarea
+              className={styles.notesArea}
+              value={notes}
+              onChange={e => {
+                setNotes(e.target.value)
+                e.target.style.height = 'auto'
+                e.target.style.height = e.target.scrollHeight + 'px'
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Tab') {
+                  e.preventDefault()
+                  const el = e.currentTarget
+                  const start = el.selectionStart
+                  const end = el.selectionEnd
+                  const newVal = notes.substring(0, start) + '  ' + notes.substring(end)
+                  setNotes(newVal)
+                  requestAnimationFrame(() => {
+                    el.selectionStart = el.selectionEnd = start + 2
+                  })
+                }
+              }}
+              ref={el => {
+                if (el) {
+                  el.style.height = 'auto'
+                  el.style.height = el.scrollHeight + 'px'
+                }
+              }}
+              placeholder="Markdown supported — **bold**, _italic_, `code`, ## headings, - lists…"
+              rows={6}
+            />
+            <div className={styles.notesFooter}>
+              <button
+                onClick={() => saveNotes.mutate()}
+                disabled={saveNotes.isPending}
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                {saveNotes.isPending ? 'Saving…' : 'Save Notes'}
+              </button>
+              <button
+                onClick={() => setEditingNotes(false)}
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}
+              >
+                Cancel
+              </button>
+              {saved && <span className={styles.savedMsg}>Saved</span>}
+            </div>
+          </>
+        ) : notes ? (
+          <div className={styles.notesPreview} onClick={() => setEditingNotes(true)}>
+            <ReactMarkdown>{notes}</ReactMarkdown>
+          </div>
+        ) : (
+          <p className={styles.notesEmpty} onClick={() => setEditingNotes(true)}>
+            Click to add notes… (Markdown supported)
+          </p>
+        )}
       </section>
 
       <section className={styles.section}>

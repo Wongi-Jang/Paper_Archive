@@ -19,6 +19,7 @@ Return ONLY a valid JSON object with exactly these keys:
 {
   "title": "...",
   "authors": ["author1", "author2"],
+  "published_date": "YYYY-MM-DD or null",
   "keywords": ["keyword1", "keyword2", "keyword3"],
   "one_sentence_summary": "...",
   "preliminaries": "...",
@@ -37,6 +38,7 @@ Return ONLY a valid JSON object with exactly these keys:
 Rules:
 - "title": extract or infer the paper title from the content provided.
 - "authors": extract author names as a list. Use [] if not found.
+- "published_date": extract the publication or submission date in YYYY-MM-DD format. Use null if not found.
 - "keywords" MUST be a JSON array of exactly 3 short technical keywords. Use standard abbreviations where they exist (e.g. "Large Language Models" → "LLM", "Test-Time Training" → "TTT", "Reinforcement Learning" → "RL", "Natural Language Processing" → "NLP", "Retrieval-Augmented Generation" → "RAG"). Each keyword should be at most 4 words or its common abbreviation.
 - "suggested_related" MUST be a list of exactly 3 real arXiv papers closely related to this paper. Use real arXiv IDs you are confident exist.
 - All other values must be plain strings (no nested objects or arrays).
@@ -51,11 +53,22 @@ Do not add any text outside the JSON object.
 
 
 def _parse_json(text: str) -> dict:
-    if text.startswith("```"):
-        text = text.split("```")[1]
-        if text.startswith("json"):
-            text = text[4:]
-    return json.loads(text.strip())
+    text = text.strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    # Extract content from inside ``` fences
+    parts = text.split("```")
+    for part in parts[1::2]:
+        if part.startswith("json"):
+            part = part[4:]
+        part = part.strip()
+        try:
+            return json.loads(part)
+        except json.JSONDecodeError:
+            continue
+    raise ValueError(f"Could not parse JSON from response: {text[:200]}")
 
 
 def _to_str(v: object) -> str:
@@ -90,7 +103,7 @@ Analyze this paper and return JSON."""
     # Step 1: English analysis
     en_response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=2048,
+        max_tokens=4096,
         system=ANALYSIS_PROMPT,
         messages=[{"role": "user", "content": user_msg}],
     )
@@ -102,7 +115,7 @@ Analyze this paper and return JSON."""
     }
     ko_response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=2048,
+        max_tokens=4096,
         system=TRANSLATION_PROMPT,
         messages=[{"role": "user", "content": json.dumps(fields_to_translate, ensure_ascii=False)}],
     )
@@ -114,11 +127,19 @@ Analyze this paper and return JSON."""
         for r in raw_related if isinstance(r, dict) and r.get("arxiv_id")
     ][:3]
 
-    # Expose extracted title/authors so callers can update the PaperBase if needed
+    # Expose extracted metadata so callers can update the PaperBase if needed
     paper.title = en_data.get("title") or paper.title
     extracted_authors = en_data.get("authors")
     if extracted_authors and not paper.authors:
         paper.authors = _to_list(extracted_authors)
+    if not paper.published_date:
+        raw_date = en_data.get("published_date")
+        if raw_date and raw_date != "null":
+            try:
+                from datetime import date
+                paper.published_date = date.fromisoformat(str(raw_date)[:10])
+            except Exception:
+                pass
 
     return PaperAnalysis(
         keywords=_to_list(en_data.get("keywords", [])),
